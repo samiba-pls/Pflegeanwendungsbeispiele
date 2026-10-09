@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KI in der Pflege – Heatmaps je Setting</title>
+<style>
+  :root{
+    --bg:#0e1420;--panel:#161e2e;--panel2:#1b2538;--ink:#e8edf5;--muted:#93a0b5;--line:#2a364b;
+    --hue:76,201,240;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+  body.transparent{background:transparent}
+  .wrap{max-width:1180px;margin:0 auto;padding:16px 16px 24px}
+  .bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:14px}
+  .bar .sp{flex:1}
+  label.chk{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer}
+  label.chk input{accent-color:#4cc9f0;width:16px;height:16px}
+  .legend{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .legend .grad{width:120px;height:10px;border-radius:5px;background:linear-gradient(90deg,rgba(var(--hue),.15),rgba(var(--hue),1))}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 14px 12px}
+  .card h2{margin:0 0 2px;font-size:15px;display:flex;justify-content:space-between;align-items:baseline}
+  .card h2 small{font-size:12px;font-weight:400;color:var(--muted)}
+  .card .desc{font-size:11px;color:var(--muted);margin:0 0 10px}
+  table{border-collapse:separate;border-spacing:4px;width:100%;table-layout:fixed}
+  th{font-size:10.5px;font-weight:600;color:var(--muted);padding:2px;vertical-align:bottom;line-height:1.2}
+  th.col{text-align:center;height:34px;color:#f2a65a}
+  th.row{text-align:right;width:84px;padding-right:6px;color:#5fd0c5;font-size:11px}
+  .axis-note{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin:0 0 4px 88px}
+  .axis-note .z{color:#f2a65a}
+  .rowlab{font-size:10.5px;color:#5fd0c5;margin:4px 0 0}
+  td{padding:0}
+  .cell{display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:1.25;border-radius:6px;border:1px solid var(--line);
+    background:transparent;color:var(--muted);font:600 18px Inter,system-ui,sans-serif;cursor:default;padding:0}
+  .cell[data-n="0"]{font-weight:400;opacity:.45}
+  button.cell{cursor:pointer}
+  button.cell:hover{outline:2px solid #fff;outline-offset:-2px}
+  button.cell:focus-visible{outline:2px solid #fff;outline-offset:1px}
+  button.cell[aria-pressed="true"]{outline:2px solid #fff;outline-offset:1px}
+  .unclear{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 4px,transparent 4px 8px)}
+  th.unc{color:#8a94a6;font-style:italic}
+  .detail{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:96px}
+  .detail h3{margin:0 0 4px;font-size:14px}
+  .detail .path{font-size:12px;color:var(--muted);margin-bottom:10px}
+  .detail .empty{font-size:13px;color:var(--muted)}
+  .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+  .item{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12.5px}
+  .item b{font-size:13.5px}
+  .item .t{color:var(--muted);margin:2px 0 6px}
+  .item .s{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+  .item a{color:#4cc9f0;font-size:12px;margin-left:8px}
+  .foot{margin-top:12px;font-size:11px;color:var(--muted)}
+  #err{display:none;padding:16px;color:#ff8a8a}
+  @media (max-width:420px){.grid{grid-template-columns:1fr}.card{padding:10px}th.row{width:64px;font-size:10px}.cell{font-size:15px}}
+  @media print{body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <label class="chk"><input type="checkbox" id="cUnc" checked> „Sonstiges / unklar“ und „Mehrere“ anzeigen</label>
+    <label class="chk"><input type="checkbox" id="cOther" checked> Settingübergreifend / unklar als eigene Felder</label>
+    <span class="sp"></span>
+    <div class="legend"><span>wenige</span><div class="grad"></div><span>viele Einträge</span></div>
+  </div>
+  <div id="grid" class="grid" aria-live="polite"></div>
+  <div class="detail" id="detail" aria-live="polite">
+    <div class="empty">Zelle anklicken, um die zugehörigen Projekte zu sehen.</div>
+  </div>
+  <div class="foot"><span id="count">–</span> Einträge · Zeilen: WOFÜR? Prozess-Typ · Spalten: WOMIT? KI-Typ · Farbintensität über alle Felder vergleichbar · schraffiert = unklare / mehrfache Zuordnung</div>
+  <div id="err"></div>
+</div>
+
+<script>
+if(new URLSearchParams(location.search).get("bg")==="transparent")document.body.classList.add("transparent");
+
+const SETTINGS=[
+  ["Pflegeheim","dauerhaft, 24/7"],
+  ["Pflegedienst","in der Häuslichkeit"],
+  ["Klinik","befristet, hohe Komplexität"],
+  ["Settingübergreifend","mehrere Settings"],
+  ["Sonstiges / unklar","Setting nicht erkennbar"]
+];
+const ROWS=["Pflegen","Versorgen","Organisieren","Kommunizieren"];
+const COLS=["Robotik","Sprache + Text","Bild + Sensorik","Prognose + Optimierung"];
+const ROWS_X=["Mehrere Prozess-Typen","Sonstiges / unklar"];
+const COLS_X=["Mehrere KI-Typen","Sonstiges / unklar"];
+const SHORT={"Prognose + Optimierung":"Prognose + Optim.","Sonstiges / unklar":"unklar","Mehrere Prozess-Typen":"Mehrere","Mehrere KI-Typen":"Mehrere","Kommunizieren":"Kommuni-zieren"};
+const sh=t=>SHORT[t]||t;
+
+let data=[],sel=null;
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function axes(){
+  const showUnc=$("cUnc").checked;
+  let rows=ROWS.slice(),cols=COLS.slice();
+  // unbekannte Kategorien aus Excel automatisch ergaenzen
+  data.forEach(d=>{
+    if(![...ROWS,...ROWS_X].includes(d.prozess))rows.push(d.prozess);
+    if(![...COLS,...COLS_X].includes(d.ki))cols.push(d.ki);
+  });
+  rows=[...new Set(rows)];cols=[...new Set(cols)];
+  const rx=[...ROWS_X],cx=[...COLS_X];
+  if(showUnc){rows=rows.concat(rx);cols=cols.concat(cx);}
+  return {rows,cols,rx,cx};
+}
+function settingsList(){
+  const merged=$("cOther").checked;
+  let list=SETTINGS.slice(0,3);
+  data.forEach(d=>{if(!SETTINGS.some(s=>s[0]===d.setting))list.push([d.setting,""]);});
+  if(merged)list=list.concat(SETTINGS.slice(3));
+  return [...new Map(list.map(s=>[s[0],s])).values()];
+}
+function render(){
+  const {rows,cols,rx,cx}=axes();
+  const sets=settingsList();
+  const cnt=(s,r,c)=>data.filter(d=>d.setting===s&&d.prozess===r&&d.ki===c);
+  let max=1;
+  sets.forEach(([s])=>rows.forEach(r=>cols.forEach(c=>{max=Math.max(max,cnt(s,r,c).length);})));
+  const shown=new Set();
+  const g=$("grid");g.innerHTML="";
+  sets.forEach(([s,desc])=>{
+    let total=0;
+    const card=document.createElement("section");card.className="card";
+    let h='<table role="grid"><thead><tr><th></th>'+cols.map(c=>`<th class="col${cx.includes(c)?" unc":""}" scope="col">${esc(sh(c))}</th>`).join("")+"</tr></thead><tbody>";
+    rows.forEach(r=>{
+      h+=`<tr><th class="row${rx.includes(r)?" unc":""}" scope="row">${esc(sh(r))}</th>`;
+      cols.forEach(c=>{
+        const items=cnt(s,r,c);const n=items.length;total+=n;
+        items.forEach(i=>shown.add(i));
+        const unc=rx.includes(r)||cx.includes(c);
+        const a=n?(.18+.82*n/max):0;
+        const dark=a>.55;
+        const style=n?`background:rgba(76,201,240,${a.toFixed(2)});border-color:rgba(76,201,240,${Math.min(1,a+.2).toFixed(2)});color:${dark?"#0e1420":"#e8edf5"}`:"";
+        const key=[s,r,c].join("|");
+        const pressed=sel===key;
+        h+=n?`<td><button class="cell${unc?" unclear":""}" data-n="${n}" data-key="${esc(key)}" aria-pressed="${pressed}" aria-label="${esc(s)}, ${esc(r)}, ${esc(c)}: ${n} Einträge" title="${esc(items.map(i=>i.name).join(", "))}" style="${style}">${n}</button></td>`
+          :`<td><div class="cell${unc?" unclear":""}" data-n="0" aria-label="${esc(s)}, ${esc(r)}, ${esc(c)}: keine Einträge">·</div></td>`;
+      });
+      h+="</tr>";
+    });
+    h+="</tbody></table>";
+    card.innerHTML=`<h2>${esc(s)}<small>${total} Einträge</small></h2><p class="desc">${esc(desc)}</p>${h}`;
+    g.appendChild(card);
+  });
+  const hidden=data.length-shown.size;
+  $("count").textContent=data.length+(hidden?` (${hidden} bei aktueller Auswahl ausgeblendet)`:"");
+  g.querySelectorAll("button.cell").forEach(b=>b.addEventListener("click",()=>{
+    sel=sel===b.dataset.key?null:b.dataset.key;render();showDetail();
+  }));
+}
+function showDetail(){
+  const d=$("detail");
+  if(!sel){d.innerHTML='<div class="empty">Zelle anklicken, um die zugehörigen Projekte zu sehen.</div>';return;}
+  const [s,r,c]=sel.split("|");
+  const items=data.filter(x=>x.setting===s&&x.prozess===r&&x.ki===c);
+  d.innerHTML=`<h3>${items.length} Einträge</h3><div class="path">WO: ${esc(s)} · WOFÜR: ${esc(r)} · WOMIT: ${esc(c)}</div><div class="items">`+
+   items.map(i=>`<div class="item"><b>${esc(i.name)}</b><div class="t">${esc(i.traeger)}</div><span class="s">${esc(i.status)}</span>${/^https?:\/\//.test(i.link)?`<a href="${esc(i.link)}" target="_blank" rel="noopener">Quelle ↗</a>`:""}</div>`).join("")+"</div>";
+}
+$("cUnc").addEventListener("change",()=>{render();});
+$("cOther").addEventListener("change",()=>{render();});
+
+fetch("data.json",{cache:"no-cache"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
+  .then(j=>{data=j;render();})
+  .catch(e=>{const m=$("err");m.style.display="block";
+    m.textContent="data.json konnte nicht geladen werden ("+e.message+"). Bei lokalem Test bitte über einen Webserver öffnen (python -m http.server).";});
+</script>
+</body>
+</html>

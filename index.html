@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KI in der Pflege – 3D-Würfel (v2)</title>
+<title>KI in der Pflege – 3D-Würfel</title>
 <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
 <style>
   :root{
@@ -58,12 +58,11 @@
   </div>
 </div>
 <div id="err">Die Grafik konnte nicht geladen werden (Plotly nicht erreichbar).</div>
-<div class="foot">34 Einträge · Punkte in derselben Zelle sind leicht versetzt · „unklar“ / „Mehrere“ markieren Datenlücken bzw. Mehrfachzuordnungen</div>
+<div class="foot"><span id="count">–</span> Einträge · Punkte in derselben Zelle sind leicht versetzt · „unklar“ / „Mehrere“ markieren Datenlücken bzw. Mehrfachzuordnungen</div>
 
 <script>
 if(new URLSearchParams(location.search).get("bg")==="transparent")document.body.classList.add("transparent");
 
-const D=[[3,"EPWUFKI","Hochschule Niederrhein","Pflegedienst","Organisieren","Bild + Sensorik","Forschungsprojekt umgesetzt"],[4,"KIADEKU","Universitätsklinikum Essen","Settingübergreifend","Organisieren","Bild + Sensorik","Forschungsprojekt umgesetzt"],[5,"KIDELIR","Universitätsklinikum Freiburg","Klinik","Organisieren","Prognose + Optimierung","Forschungsprojekt umgesetzt"],[6,"KIP-SDM","Charité","Settingübergreifend","Sonstiges / unklar","Prognose + Optimierung","Forschungsprojekt umgesetzt"],[7,"PfleDaKI","FZI Forschungszentrum Informatik","Settingübergreifend","Sonstiges / unklar","Prognose + Optimierung","Forschungsprojekt umgesetzt"],[8,"PFLIP","Fraunhofer-Institut für Software- und Systemtechnik","Settingübergreifend","Sonstiges / unklar","Prognose + Optimierung","Forschungsprojekt umgesetzt"],[9,"PYSA","voize","Pflegedienst","Organisieren","Sprache + Text","Forschungsprojekt umgesetzt"],[10,"voize","voize.ai","Pflegeheim","Organisieren","Sprache + Text","Im laufenden Einsatz"],[11,"iPAB","Fraunhofer-Institut für Integrierte Schaltungen","Settingübergreifend","Organisieren","Prognose + Optimierung","Forschungsprojekt umgesetzt"],[12,"EMRE-KI","Charité","Klinik","Organisieren","Prognose + Optimierung","Im laufenden Einsatz"],[13,"VReha-PflegeSim","Martin-Luther-Universität Halle-Wittenberg","Sonstiges / unklar","Kommunizieren","Bild + Sensorik","Im laufenden Einsatz"],[14,"LIFT","Martin-Luther-Universität Halle-Wittenberg","Sonstiges / unklar","Sonstiges / unklar","Bild + Sensorik","Im laufenden Einsatz"],[15,"OMNI","Autonomy on Board GmbH, Halle (Saale)","Pflegedienst","Organisieren","Sprache + Text","Im laufenden Einsatz"],[16,"SeeCure","Goodly Technologies GmbH","Pflegedienst","Organisieren","Bild + Sensorik","Im laufenden Einsatz"],[17,"ErgoFee","MinkTec GmbH, Braunschweig","Pflegedienst","Pflegen","Bild + Sensorik","Im laufenden Einsatz"],[18,"ARKIST","Martin-Luther-Universität Halle-Wittenberg","Settingübergreifend","Versorgen","Bild + Sensorik","Im laufenden Einsatz"],[19,"DementiaVoiceBot","Medizinische Universität Lausitz – Carl Thiem","Pflegedienst","Kommunizieren","Sprache + Text","Im laufenden Einsatz"],[20,"SelfRo","Technische Hochschule Mannheim","Pflegeheim","Pflegen","Robotik","Im laufenden Einsatz"],[21,"MAPPLE","Fraunhofer-Institut für Fabrikbetrieb und -automatisierung","Klinik","Pflegen","Robotik","Im laufenden Einsatz"],[22,"HELIA","Universitätsklinikum Würzburg","Klinik","Versorgen","Robotik","Im laufenden Einsatz"],[23,"CICERO","Fraunhofer-Institut für Materialfluss und Logistik","Pflegeheim","Pflegen","Robotik","Im laufenden Einsatz"],[24,"HEART","Neura Robotics GmbH, Metzingen","Pflegeheim","Pflegen","Robotik","Im laufenden Einsatz"],[25,"IKAIWu","sciendis GmbH, Leipzig","Settingübergreifend","Organisieren","Mehrere KI-Typen","Im laufenden Einsatz"],[26,"SafeWalker","Hochschule für Angewandte Wissenschaften Hamburg","Sonstiges / unklar","Sonstiges / unklar","Robotik","Im laufenden Einsatz"],[27,"PräEinsamAltKI","Martin-Luther-Universität Halle-Wittenberg","Pflegedienst","Sonstiges / unklar","Sprache + Text","Im laufenden Einsatz"],[28,"ProSSpon","Perspective Care GmbH, Walzbachtal","Pflegeheim","Organisieren","Prognose + Optimierung","Im laufenden Einsatz"],[29,"ATOSS","Atoss Software; Fraunhofer IKS","Klinik","Organisieren","Prognose + Optimierung","Pilot / Praxistest"],[30,"curevision","cureVision GmbH","Settingübergreifend","Organisieren","Prognose + Optimierung","Im laufenden Einsatz"],[31,"ally cares","ally","Pflegeheim","Pflegen","Prognose + Optimierung","Im laufenden Einsatz"],[32,"Nobi","Nobi","Pflegeheim","Sonstiges / unklar","Bild + Sensorik","Im laufenden Einsatz"],[33,"Homeguardian.ai","Homeguardian.ai","Pflegeheim","Sonstiges / unklar","Bild + Sensorik","Im laufenden Einsatz"],[34,"safety ai","safely you","Pflegeheim","Sonstiges / unklar","Sonstiges / unklar","Im laufenden Einsatz"],[35,"Quema","Quema","Pflegeheim","Sonstiges / unklar","Sonstiges / unklar","Im laufenden Einsatz"],[36,"dexter mobile","dexter health","Settingübergreifend","Kommunizieren","Sprache + Text","Im laufenden Einsatz"]];
 
 const AX={
   s:["Pflegeheim","Pflegedienst","Klinik","Setting-<br>übergreifend","Sonstiges /<br>unklar"],
@@ -77,30 +76,39 @@ const FULL={
 };
 const COL={x:"#f2a65a",y:"#5fd0c5",z:"#b79cff"};
 const PAL=["#4cc9f0","#f2a65a","#8ddb7a","#e879b9","#f6d55c","#8a94a6"];
-const STATUS={"Im laufenden Einsatz":"#4cc9f0","Forschungsprojekt umgesetzt":"#f2a65a","Pilot / Praxistest":"#8ddb7a"};
+const STATUS={"Im laufenden Einsatz":"#4cc9f0","Forschungsprojekt umgesetzt":"#f2a65a","Pilot / Praxistest":"#8ddb7a","Prototyp / Demonstrator":"#e879b9","Konzept / frühe Entwicklung":"#f6d55c","Beendet / nicht mehr aktiv":"#8a94a6","Unklar":"#5b6578"};
 
-const cnt={};
-const pts=D.map(([id,n,t,s,p,k,u])=>({id,n,t,s,p,k,u,key:[s,p,k].join("|")}));
-pts.forEach(q=>{cnt[q.key]=(cnt[q.key]||0)+1;q.i=cnt[q.key];});
-pts.forEach(q=>{
-  const m=cnt[q.key],a=(q.i-1)/m*2*Math.PI,r=m===1?0:Math.min(.3,.1+.04*m);
-  q.x=FULL.s.indexOf(q.s)+r*Math.cos(a);
-  q.y=FULL.p.indexOf(q.p)+r*Math.sin(a);
-  q.z=FULL.k.indexOf(q.k)+(m===1?0:((q.i%3)-1)*.12);
-});
+let pts=[];
+function esc(t){return String(t).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+function build(data){
+  // unbekannte Kategorien aus der Excel automatisch an die Achsen anhaengen
+  data.forEach(r=>{[["s","setting"],["p","prozess"],["k","ki"]].forEach(([a,f])=>{
+    if(!FULL[a].includes(r[f])){FULL[a].push(r[f]);AX[a].push(r[f]);}});});
+  const cnt={};
+  pts=data.map(r=>({id:r.id,n:r.name,t:r.traeger,s:r.setting,p:r.prozess,k:r.ki,u:r.status,d:r.beschreibung,l:r.link,key:[r.setting,r.prozess,r.ki].join("|")}));
+  pts.forEach(q=>{cnt[q.key]=(cnt[q.key]||0)+1;q.i=cnt[q.key];});
+  pts.forEach(q=>{
+    const m=cnt[q.key],a=(q.i-1)/m*2*Math.PI,r=m===1?0:Math.min(.3,.1+.04*m);
+    q.x=FULL.s.indexOf(q.s)+r*Math.cos(a);
+    q.y=FULL.p.indexOf(q.p)+r*Math.sin(a);
+    q.z=FULL.k.indexOf(q.k)+(m===1?0:((q.i%3)-1)*.12);
+  });
+  document.getElementById("count").textContent=pts.length;
+}
 
 let mode="status";
 function groups(){
   const f={status:q=>q.u,setting:q=>q.s,proc:q=>q.p,ki:q=>q.k}[mode];
   const order={status:Object.keys(STATUS),setting:FULL.s,proc:FULL.p,ki:FULL.k}[mode];
   const names=[...new Set(pts.map(f))].sort((a,b)=>order.indexOf(a)-order.indexOf(b));
-  return names.map(g=>({g,col:mode==="status"?STATUS[g]:PAL[order.indexOf(g)%PAL.length],items:pts.filter(q=>f(q)===g)}));
+  return names.map(g=>({g,col:mode==="status"?(STATUS[g]||"#8a94a6"):PAL[order.indexOf(g)%PAL.length],items:pts.filter(q=>f(q)===g)}));
 }
 function traces(){
   const t=groups().map(({g,col,items})=>({
     type:"scatter3d",mode:"markers",name:g+" ("+items.length+")",
     x:items.map(q=>q.x),y:items.map(q=>q.y),z:items.map(q=>q.z),
-    text:items.map(q=>"<b>"+q.n+"</b><br>"+q.t+"<br><br>WO: "+q.s+"<br>WOFÜR: "+q.p+"<br>WOMIT: "+q.k+"<br>Status: "+q.u),
+    text:items.map(q=>"<b>"+esc(q.n)+"</b><br>"+esc(q.t)+"<br><br>WO: "+esc(q.s)+"<br>WOFÜR: "+esc(q.p)+"<br>WOMIT: "+esc(q.k)+"<br>Status: "+esc(q.u)+(q.l?"<br><i>Klick: Quelle öffnen</i>":"")),
+    customdata:items.map(q=>q.l),
     hoverinfo:"text",
     hoverlabel:{bgcolor:"#161e2e",bordercolor:col,font:{color:"#e8edf5",size:12}},
     marker:{size:7,color:col,opacity:1,line:{color:"#0e1420",width:1}}
@@ -132,7 +140,14 @@ function draw(keepCam){
   if(keepCam&&el._fullLayout&&el._fullLayout.scene)l.scene.camera=el._fullLayout.scene.camera;
   Plotly.react(el,traces(),l,cfg);
 }
-draw();
+function bindClick(){
+  el.on("plotly_click",ev=>{const u=ev.points[0]&&ev.points[0].customdata;
+    if(u&&/^https?:\/\//.test(u))window.open(u,"_blank","noopener");});
+}
+fetch("data.json",{cache:"no-cache"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
+  .then(data=>{build(data);draw();bindClick();})
+  .catch(e=>{const m=document.getElementById("err");m.style.display="block";
+    m.textContent="data.json konnte nicht geladen werden ("+e.message+"). Bei lokalem Test bitte über einen Webserver öffnen (z. B. python -m http.server).";});
 
 const btns={status:bStatus,setting:bSetting,proc:bProc,ki:bKI};
 Object.entries(btns).forEach(([m,b])=>b.addEventListener("click",()=>{
