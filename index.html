@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KI in der Pflege – 3D-Würfel</title>
+<title>KI in der Pflege – Würfel &amp; Heatmaps</title>
 <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
 <style>
   :root{
-    --bg:#0e1420;--panel:#161e2e;--ink:#e8edf5;--muted:#93a0b5;--line:#2a364b;
+    --bg:#0e1420;--panel:#161e2e;--panel2:#1b2538;--ink:#e8edf5;--muted:#93a0b5;--line:#2a364b;
     --ax-x:#f2a65a;--ax-y:#5fd0c5;--ax-z:#b79cff;
   }
   *{box-sizing:border-box}
@@ -32,11 +32,67 @@
   .foot{padding:6px 14px 10px;font-size:11px;color:var(--muted)}
   #err{display:none;padding:24px;color:#ff8a8a}
   @media (max-width:640px){.axes{display:none}.stage{min-height:360px}}
+#heat .wrap{max-width:1180px;margin:0 auto;padding:16px 16px 24px}
+#heat .bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:14px}
+#heat .bar .sp{flex:1}
+#heat label.chk{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer}
+#heat label.chk input{accent-color:#4cc9f0;width:16px;height:16px}
+#heat .legend{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+#heat .legend .grad{width:120px;height:10px;border-radius:5px;background:linear-gradient(90deg,rgba(var(--hue),.15),rgba(var(--hue),1))}
+#heat .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px}
+#heat .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 14px 12px}
+#heat .card h2{margin:0 0 2px;font-size:15px;display:flex;justify-content:space-between;align-items:baseline}
+#heat .card h2 small{font-size:12px;font-weight:400;color:var(--muted)}
+#heat .card .desc{font-size:11px;color:var(--muted);margin:0 0 10px}
+#heat table{border-collapse:separate;border-spacing:4px;width:100%;table-layout:fixed}
+#heat th{font-size:10.5px;font-weight:600;color:var(--muted);padding:2px;vertical-align:bottom;line-height:1.2}
+#heat th.col{text-align:center;height:34px;color:#f2a65a}
+#heat th.row{text-align:right;width:84px;padding-right:6px;color:#5fd0c5;font-size:11px}
+#heat .axis-note{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin:0 0 4px 88px}
+#heat .axis-note .z{color:#f2a65a}
+#heat .rowlab{font-size:10.5px;color:#5fd0c5;margin:4px 0 0}
+#heat td{padding:0}
+#heat .cell{display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:1.25;border-radius:6px;border:1px solid var(--line);
+    background:transparent;color:var(--muted);font:600 18px Inter,system-ui,sans-serif;cursor:default;padding:0}
+#heat .cell[data-n="0"]{font-weight:400;opacity:.45}
+#heat button.cell{cursor:pointer}
+#heat button.cell:hover{outline:2px solid #fff;outline-offset:-2px}
+#heat button.cell:focus-visible{outline:2px solid #fff;outline-offset:1px}
+#heat button.cell[aria-pressed="true"]{outline:2px solid #fff;outline-offset:1px}
+#heat .unclear{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 4px,transparent 4px 8px)}
+#heat th.unc{color:#8a94a6;font-style:italic}
+#heat .detail{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:96px}
+#heat .detail h3{margin:0 0 4px;font-size:14px}
+#heat .detail .path{font-size:12px;color:var(--muted);margin-bottom:10px}
+#heat .detail .empty{font-size:13px;color:var(--muted)}
+#heat .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+#heat .item{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12.5px}
+#heat .item b{font-size:13.5px}
+#heat .item .t{color:var(--muted);margin:2px 0 6px}
+#heat .item .s{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+#heat .item a{color:#4cc9f0;font-size:12px;margin-left:8px}
+#heat .foot{margin-top:12px;font-size:11px;color:var(--muted)}
+#heat #err{display:none;padding:16px;color:#ff8a8a}
+#heat{display:none;flex:1;min-height:0;overflow:auto;--hue:76,201,240}
+#heat.on{display:block}
+#heat .wrap{max-width:1180px;margin:0 auto;padding:14px 16px 20px}
+#heat .hbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:14px}
+#heat .hbar .sp{flex:1}
+@media (max-width:420px){#heat .grid{grid-template-columns:1fr}#heat .card{padding:10px}#heat th.row{width:64px;font-size:10px}#heat .cell{font-size:15px}}
+#heat .foot{padding:0}
+body.view-heat .stage,body.view-heat .only3d,body.view-heat #foot3d{display:none}
+body:not(.view-heat) .onlyheat{display:none}
+
 </style>
 </head>
 <body>
 <div class="bar" role="group" aria-label="Darstellung">
   <div class="grp">
+    <span class="lbl">Ansicht</span>
+    <button id="vCube" aria-pressed="true">3D-Würfel</button>
+    <button id="vHeat" aria-pressed="false">Heatmaps</button>
+  </div>
+  <div class="grp only3d">
     <span class="lbl">Farbe nach</span>
     <button id="bStatus" aria-pressed="true">Status</button>
     <button id="bSetting" aria-pressed="false">Setting</button>
@@ -44,7 +100,7 @@
     <button id="bKI" aria-pressed="false">KI-Typ</button>
   </div>
   <span class="sp"></span>
-  <div class="grp">
+  <div class="grp only3d">
     <button id="bSpin" aria-pressed="false">Drehen</button>
     <button id="bReset">Zurücksetzen</button>
   </div>
@@ -57,8 +113,21 @@
     <div class="z"><b>WOMIT?</b><span>KI-Typ</span></div>
   </div>
 </div>
+<div id="heat" aria-label="Heatmaps je Setting"><div class="wrap">
+  <div class="hbar onlyheat-inner">
+    <label class="chk"><input type="checkbox" id="cUnc" checked> „Sonstiges / unklar“ und „Mehrere“ anzeigen</label>
+    <label class="chk"><input type="checkbox" id="cOther" checked> Settingübergreifend / unklar als eigene Felder</label>
+    <span class="sp"></span>
+    <div class="legend"><span>wenige</span><div class="grad"></div><span>viele Einträge</span></div>
+  </div>
+  <div id="grid" class="grid" aria-live="polite"></div>
+  <div class="detail" id="detail" aria-live="polite">
+    <div class="empty">Zelle anklicken, um die zugehörigen Projekte zu sehen.</div>
+  </div>
+  <div class="foot"><span id="hcount">–</span> Einträge · Zeilen: WOFÜR? Prozess-Typ · Spalten: WOMIT? KI-Typ · Farbintensität über alle Felder vergleichbar · schraffiert = unklare / mehrfache Zuordnung</div>
+</div></div>
 <div id="err">Die Grafik konnte nicht geladen werden (Plotly nicht erreichbar).</div>
-<div class="foot"><span id="count">–</span> Einträge · Punkte in derselben Zelle sind leicht versetzt · „unklar“ / „Mehrere“ markieren Datenlücken bzw. Mehrfachzuordnungen</div>
+<div class="foot" id="foot3d"><span id="count">–</span> Einträge · Punkte in derselben Zelle sind leicht versetzt · „unklar“ / „Mehrere“ markieren Datenlücken bzw. Mehrfachzuordnungen</div>
 
 <script>
 if(new URLSearchParams(location.search).get("bg")==="transparent")document.body.classList.add("transparent");
@@ -140,12 +209,103 @@ function draw(keepCam){
   if(keepCam&&el._fullLayout&&el._fullLayout.scene)l.scene.camera=el._fullLayout.scene.camera;
   Plotly.react(el,traces(),l,cfg);
 }
+const Heat=(function(){
+const SETTINGS=[
+  ["Pflegeheim","dauerhaft, 24/7"],
+  ["Pflegedienst","in der Häuslichkeit"],
+  ["Klinik","befristet, hohe Komplexität"],
+  ["Settingübergreifend","mehrere Settings"],
+  ["Sonstiges / unklar","Setting nicht erkennbar"]
+];
+const ROWS=["Pflegen","Versorgen","Organisieren","Kommunizieren"];
+const COLS=["Robotik","Sprache + Text","Bild + Sensorik","Prognose + Optimierung"];
+const ROWS_X=["Mehrere Prozess-Typen","Sonstiges / unklar"];
+const COLS_X=["Mehrere KI-Typen","Sonstiges / unklar"];
+const SHORT={"Prognose + Optimierung":"Prognose + Optim.","Sonstiges / unklar":"unklar","Mehrere Prozess-Typen":"Mehrere","Mehrere KI-Typen":"Mehrere","Kommunizieren":"Kommuni-zieren"};
+const sh=t=>SHORT[t]||t;
+let data=[],sel=null;
+
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function axes(){
+  const showUnc=$("cUnc").checked;
+  let rows=ROWS.slice(),cols=COLS.slice();
+  // unbekannte Kategorien aus Excel automatisch ergaenzen
+  data.forEach(d=>{
+    if(![...ROWS,...ROWS_X].includes(d.prozess))rows.push(d.prozess);
+    if(![...COLS,...COLS_X].includes(d.ki))cols.push(d.ki);
+  });
+  rows=[...new Set(rows)];cols=[...new Set(cols)];
+  const rx=[...ROWS_X],cx=[...COLS_X];
+  if(showUnc){rows=rows.concat(rx);cols=cols.concat(cx);}
+  return {rows,cols,rx,cx};
+}
+function settingsList(){
+  const merged=$("cOther").checked;
+  let list=SETTINGS.slice(0,3);
+  data.forEach(d=>{if(!SETTINGS.some(s=>s[0]===d.setting))list.push([d.setting,""]);});
+  if(merged)list=list.concat(SETTINGS.slice(3));
+  return [...new Map(list.map(s=>[s[0],s])).values()];
+}
+function render(){
+  const {rows,cols,rx,cx}=axes();
+  const sets=settingsList();
+  const cnt=(s,r,c)=>data.filter(d=>d.setting===s&&d.prozess===r&&d.ki===c);
+  let max=1;
+  sets.forEach(([s])=>rows.forEach(r=>cols.forEach(c=>{max=Math.max(max,cnt(s,r,c).length);})));
+  const shown=new Set();
+  const g=$("grid");g.innerHTML="";
+  sets.forEach(([s,desc])=>{
+    let total=0;
+    const card=document.createElement("section");card.className="card";
+    let h='<table role="grid"><thead><tr><th></th>'+cols.map(c=>`<th class="col${cx.includes(c)?" unc":""}" scope="col">${esc(sh(c))}</th>`).join("")+"</tr></thead><tbody>";
+    rows.forEach(r=>{
+      h+=`<tr><th class="row${rx.includes(r)?" unc":""}" scope="row">${esc(sh(r))}</th>`;
+      cols.forEach(c=>{
+        const items=cnt(s,r,c);const n=items.length;total+=n;
+        items.forEach(i=>shown.add(i));
+        const unc=rx.includes(r)||cx.includes(c);
+        const a=n?(.18+.82*n/max):0;
+        const dark=a>.55;
+        const style=n?`background:rgba(76,201,240,${a.toFixed(2)});border-color:rgba(76,201,240,${Math.min(1,a+.2).toFixed(2)});color:${dark?"#0e1420":"#e8edf5"}`:"";
+        const key=[s,r,c].join("|");
+        const pressed=sel===key;
+        h+=n?`<td><button class="cell${unc?" unclear":""}" data-n="${n}" data-key="${esc(key)}" aria-pressed="${pressed}" aria-label="${esc(s)}, ${esc(r)}, ${esc(c)}: ${n} Einträge" title="${esc(items.map(i=>i.name).join(", "))}" style="${style}">${n}</button></td>`
+          :`<td><div class="cell${unc?" unclear":""}" data-n="0" aria-label="${esc(s)}, ${esc(r)}, ${esc(c)}: keine Einträge">·</div></td>`;
+      });
+      h+="</tr>";
+    });
+    h+="</tbody></table>";
+    card.innerHTML=`<h2>${esc(s)}<small>${total} Einträge</small></h2><p class="desc">${esc(desc)}</p>${h}`;
+    g.appendChild(card);
+  });
+  const hidden=data.length-shown.size;
+  $("hcount").textContent=data.length+(hidden?` (${hidden} bei aktueller Auswahl ausgeblendet)`:"");
+  g.querySelectorAll("button.cell").forEach(b=>b.addEventListener("click",()=>{
+    sel=sel===b.dataset.key?null:b.dataset.key;render();showDetail();
+  }));
+}
+function showDetail(){
+  const d=$("detail");
+  if(!sel){d.innerHTML='<div class="empty">Zelle anklicken, um die zugehörigen Projekte zu sehen.</div>';return;}
+  const [s,r,c]=sel.split("|");
+  const items=data.filter(x=>x.setting===s&&x.prozess===r&&x.ki===c);
+  d.innerHTML=`<h3>${items.length} Einträge</h3><div class="path">WO: ${esc(s)} · WOFÜR: ${esc(r)} · WOMIT: ${esc(c)}</div><div class="items">`+
+   items.map(i=>`<div class="item"><b>${esc(i.name)}</b><div class="t">${esc(i.traeger)}</div><span class="s">${esc(i.status)}</span>${/^https?:\/\//.test(i.link)?`<a href="${esc(i.link)}" target="_blank" rel="noopener">Quelle ↗</a>`:""}</div>`).join("")+"</div>";
+}
+$("cUnc").addEventListener("change",()=>{render();});
+$("cOther").addEventListener("change",()=>{render();});
+
+return {set(d){data=d;render();}};
+})();
+
 function bindClick(){
   el.on("plotly_click",ev=>{const u=ev.points[0]&&ev.points[0].customdata;
     if(u&&/^https?:\/\//.test(u))window.open(u,"_blank","noopener");});
 }
 fetch("data.json",{cache:"no-cache"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
-  .then(data=>{build(data);draw();bindClick();})
+  .then(data=>{build(data);Heat.set(data);draw();bindClick();})
   .catch(e=>{const m=document.getElementById("err");m.style.display="block";
     m.textContent="data.json konnte nicht geladen werden ("+e.message+"). Bei lokalem Test bitte über einen Webserver öffnen (z. B. python -m http.server).";});
 
@@ -167,6 +327,19 @@ bSpin.addEventListener("click",()=>{
 });
 el.addEventListener("pointerdown",stop);
 bReset.addEventListener("click",()=>{stop();ang=Math.atan2(-1.9,1.7);Plotly.relayout(el,{"scene.camera":cam0});});
+const views={cube:vCube,heat:vHeat};
+function setView(v){
+  document.body.classList.toggle("view-heat",v==="heat");
+  document.getElementById("heat").classList.toggle("on",v==="heat");
+  vCube.setAttribute("aria-pressed",String(v==="cube"));
+  vHeat.setAttribute("aria-pressed",String(v==="heat"));
+  if(v==="heat")stop();
+  else if(window.Plotly&&el.data)setTimeout(()=>Plotly.Plots.resize(el),30);
+  try{history.replaceState(null,"",v==="heat"?"#heatmap":"#wuerfel");}catch(e){}
+}
+vCube.addEventListener("click",()=>setView("cube"));
+vHeat.addEventListener("click",()=>setView("heat"));
+if(location.hash==="#heatmap")setView("heat");
 </script>
 </body>
 </html>
