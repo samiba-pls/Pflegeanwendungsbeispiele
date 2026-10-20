@@ -8,20 +8,34 @@
 <style>
   :root{
     --bg:#0e1420;--panel:#161e2e;--panel2:#1b2538;--ink:#e8edf5;--muted:#93a0b5;--line:#2a364b;
-    --ax-x:#f2a65a;--ax-y:#5fd0c5;--ax-z:#b79cff;
+    --ax-x:#f2a65a;--ax-y:#5fd0c5;--ax-z:#b79cff;--hue:76,201,240;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{margin:0;font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg);display:flex;flex-direction:column}
   body.transparent{background:transparent}
-  .bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
-  .bar .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line)}
+  .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
   .grp{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .sp{flex:1}
   button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 11px;border-radius:6px;cursor:pointer}
   button:hover{border-color:#5b6f90}
   button:focus-visible{outline:2px solid var(--ax-y);outline-offset:2px}
   button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  /* Filter-Chips */
+  .filters{background:rgba(22,30,46,.55)}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;font-size:12px;border-radius:99px;background:transparent;color:var(--muted);border-color:var(--line)}
+  .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--c,#8a94a6);flex:none}
+  .chip .n{opacity:.7;font-size:11px}
+  .chip[aria-pressed="true"]{background:var(--panel2);color:var(--ink);border-color:#5b6f90}
+  .chip[aria-pressed="false"] .dot{opacity:.25}
+  .chip[aria-pressed="false"]{text-decoration:line-through;text-decoration-color:#5b6f90}
+  .chip.zero{opacity:.45}
+  .count{font-size:12px;color:var(--muted);white-space:nowrap}
+  .count b{color:var(--ink)}
+  .linkbtn{background:none;border:none;color:var(--ax-y);padding:2px 4px;font-size:12px}
+  .linkbtn[hidden]{display:none}
+  /* 3D */
   .stage{position:relative;flex:1;min-height:420px}
   #plot{position:absolute;inset:0}
   .axes{position:absolute;left:14px;bottom:14px;background:rgba(22,30,46,.88);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;pointer-events:none;max-width:260px}
@@ -29,60 +43,47 @@
   .axes b{font-size:13px;min-width:56px}
   .axes span{color:var(--muted)}
   .axes .x b{color:var(--ax-x)} .axes .y b{color:var(--ax-y)} .axes .z b{color:var(--ax-z)}
+  .empty3d{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:var(--muted);font-size:14px;pointer-events:none}
   .foot{padding:6px 14px 10px;font-size:11px;color:var(--muted)}
-  #err{display:none;padding:24px;color:#ff8a8a}
+  #err{display:none;padding:16px 24px;color:#ff8a8a}
+  /* Heatmaps */
+  #heat{display:none;flex:1;min-height:0;overflow:auto}
+  #heat.on{display:block}
+  #heat .wrap{max-width:1180px;margin:0 auto;padding:14px 16px 20px}
+  #heat .hbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:14px}
+  .legend{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .legend .grad{width:120px;height:10px;border-radius:5px;background:linear-gradient(90deg,rgba(var(--hue),.15),rgba(var(--hue),1))}
+  #heat .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+  #heat .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 14px 12px}
+  #heat .card h2{margin:0 0 2px;font-size:15px;display:flex;justify-content:space-between;align-items:baseline}
+  #heat .card h2 small{font-size:12px;font-weight:400;color:var(--muted)}
+  #heat .card .desc{font-size:11px;color:var(--muted);margin:0 0 10px}
+  #heat table{border-collapse:separate;border-spacing:4px;width:100%;table-layout:fixed}
+  #heat th{font-size:10.5px;font-weight:600;padding:2px;vertical-align:bottom;line-height:1.2}
+  #heat th.col{text-align:center;height:34px}
+  #heat th.row{text-align:right;width:84px;padding-right:6px;font-size:11px}
+  #heat td{padding:0}
+  #heat .cell{display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:1.25;border-radius:6px;border:1px solid var(--line);
+    background:transparent;color:var(--muted);font:600 18px Inter,system-ui,sans-serif;padding:0}
+  #heat .cell[data-n="0"]{font-weight:400;opacity:.45}
+  #heat button.cell{cursor:pointer}
+  #heat button.cell:hover{outline:2px solid #fff;outline-offset:-2px}
+  #heat button.cell:focus-visible,#heat button.cell[aria-pressed="true"]{outline:2px solid #fff;outline-offset:1px}
+  #heat .detail{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:96px}
+  #heat .detail h3{margin:0 0 4px;font-size:14px}
+  #heat .detail .path{font-size:12px;color:var(--muted);margin-bottom:10px}
+  #heat .detail .empty{font-size:13px;color:var(--muted)}
+  #heat .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+  #heat .item{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12.5px}
+  #heat .item b{font-size:13.5px}
+  #heat .item .t{color:var(--muted);margin:2px 0 6px}
+  #heat .item .s{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);margin-right:4px}
+  #heat .item a{color:#4cc9f0;font-size:12px;margin-left:4px}
+  #heat .foot{padding:0;margin-top:12px}
+  body.view-heat .stage,body.view-heat .only3d,body.view-heat #foot3d{display:none}
+  body:not(.view-heat) .onlyheat{display:none}
   @media (max-width:640px){.axes{display:none}.stage{min-height:360px}}
-#heat .wrap{max-width:1180px;margin:0 auto;padding:16px 16px 24px}
-#heat .bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:14px}
-#heat .bar .sp{flex:1}
-#heat label.chk{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer}
-#heat label.chk input{accent-color:#4cc9f0;width:16px;height:16px}
-#heat .legend{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
-#heat .legend .grad{width:120px;height:10px;border-radius:5px;background:linear-gradient(90deg,rgba(var(--hue),.15),rgba(var(--hue),1))}
-#heat .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px}
-#heat .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 14px 12px}
-#heat .card h2{margin:0 0 2px;font-size:15px;display:flex;justify-content:space-between;align-items:baseline}
-#heat .card h2 small{font-size:12px;font-weight:400;color:var(--muted)}
-#heat .card .desc{font-size:11px;color:var(--muted);margin:0 0 10px}
-#heat table{border-collapse:separate;border-spacing:4px;width:100%;table-layout:fixed}
-#heat th{font-size:10.5px;font-weight:600;color:var(--muted);padding:2px;vertical-align:bottom;line-height:1.2}
-#heat th.col{text-align:center;height:34px;color:#f2a65a}
-#heat th.row{text-align:right;width:84px;padding-right:6px;color:#5fd0c5;font-size:11px}
-#heat .axis-note{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin:0 0 4px 88px}
-#heat .axis-note .z{color:#f2a65a}
-#heat .rowlab{font-size:10.5px;color:#5fd0c5;margin:4px 0 0}
-#heat td{padding:0}
-#heat .cell{display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:1.25;border-radius:6px;border:1px solid var(--line);
-    background:transparent;color:var(--muted);font:600 18px Inter,system-ui,sans-serif;cursor:default;padding:0}
-#heat .cell[data-n="0"]{font-weight:400;opacity:.45}
-#heat button.cell{cursor:pointer}
-#heat button.cell:hover{outline:2px solid #fff;outline-offset:-2px}
-#heat button.cell:focus-visible{outline:2px solid #fff;outline-offset:1px}
-#heat button.cell[aria-pressed="true"]{outline:2px solid #fff;outline-offset:1px}
-#heat .unclear{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 4px,transparent 4px 8px)}
-#heat th.unc{color:#8a94a6;font-style:italic}
-#heat .detail{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:96px}
-#heat .detail h3{margin:0 0 4px;font-size:14px}
-#heat .detail .path{font-size:12px;color:var(--muted);margin-bottom:10px}
-#heat .detail .empty{font-size:13px;color:var(--muted)}
-#heat .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
-#heat .item{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12.5px}
-#heat .item b{font-size:13.5px}
-#heat .item .t{color:var(--muted);margin:2px 0 6px}
-#heat .item .s{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
-#heat .item a{color:#4cc9f0;font-size:12px;margin-left:8px}
-#heat .foot{margin-top:12px;font-size:11px;color:var(--muted)}
-#heat #err{display:none;padding:16px;color:#ff8a8a}
-#heat{display:none;flex:1;min-height:0;overflow:auto;--hue:76,201,240}
-#heat.on{display:block}
-#heat .wrap{max-width:1180px;margin:0 auto;padding:14px 16px 20px}
-#heat .hbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:14px}
-#heat .hbar .sp{flex:1}
-@media (max-width:420px){#heat .grid{grid-template-columns:1fr}#heat .card{padding:10px}#heat th.row{width:64px;font-size:10px}#heat .cell{font-size:15px}}
-#heat .foot{padding:0}
-body.view-heat .stage,body.view-heat .only3d,body.view-heat #foot3d{display:none}
-body:not(.view-heat) .onlyheat{display:none}
-
+  @media (max-width:420px){#heat .grid{grid-template-columns:1fr}#heat .card{padding:10px}#heat th.row{width:64px;font-size:10px}#heat .cell{font-size:15px}}
 </style>
 </head>
 <body>
@@ -92,12 +93,13 @@ body:not(.view-heat) .onlyheat{display:none}
     <button id="vCube" aria-pressed="true">3D-Würfel</button>
     <button id="vHeat" aria-pressed="false">Heatmaps</button>
   </div>
-  <div class="grp only3d">
+  <div class="grp only3d" id="colorBtns">
     <span class="lbl">Farbe nach</span>
-    <button id="bStatus" aria-pressed="true">Status</button>
-    <button id="bSetting" aria-pressed="false">Setting</button>
-    <button id="bProc" aria-pressed="false">Prozess-Typ</button>
-    <button id="bKI" aria-pressed="false">KI-Typ</button>
+  </div>
+  <div class="grp onlyheat" id="matrixBtns">
+    <span class="lbl">Matrix</span>
+    <button id="mOver" aria-pressed="true">Überblick (3 Paare)</button>
+    <button id="mSet" aria-pressed="false">Je Setting</button>
   </div>
   <span class="sp"></span>
   <div class="grp only3d">
@@ -105,6 +107,15 @@ body:not(.view-heat) .onlyheat{display:none}
     <button id="bReset">Zurücksetzen</button>
   </div>
 </div>
+<div class="bar filters" role="group" aria-label="Filter">
+  <div class="grp"><span class="lbl">Ort</span><span class="grp" id="fOrt"></span></div>
+  <div class="grp"><span class="lbl">Kategorie</span><span class="grp" id="fKat"></span></div>
+  <div class="grp"><span class="lbl">Status</span><span class="grp" id="fStat"></span></div>
+  <span class="sp"></span>
+  <button class="linkbtn" id="fReset" hidden>Filter zurücksetzen</button>
+  <span class="count" id="cnt"></span>
+</div>
+
 <div class="stage">
   <div id="plot" role="img" aria-label="Dreidimensionales Streudiagramm: KI-Anwendungen in der Pflege nach Setting, Prozess-Typ und KI-Typ"></div>
   <div class="axes" aria-hidden="true">
@@ -112,233 +123,263 @@ body:not(.view-heat) .onlyheat{display:none}
     <div class="y"><b>WOFÜR?</b><span>Prozess-Typ</span></div>
     <div class="z"><b>WOMIT?</b><span>KI-Typ</span></div>
   </div>
+  <div class="empty3d" id="empty3d">Keine Einträge für diese Filterauswahl.</div>
 </div>
-<div id="heat" aria-label="Heatmaps je Setting"><div class="wrap">
-  <div class="hbar onlyheat-inner">
-    <label class="chk"><input type="checkbox" id="cUnc" checked> „Sonstiges / unklar“ und „Mehrere“ anzeigen</label>
-    <label class="chk"><input type="checkbox" id="cOther" checked> Settingübergreifend / unklar als eigene Felder</label>
-    <span class="sp"></span>
-    <div class="legend"><span>wenige</span><div class="grad"></div><span>viele Einträge</span></div>
+
+<div id="heat" aria-label="Heatmaps">
+  <div class="wrap">
+    <div class="hbar"><div class="legend"><span>wenige</span><div class="grad"></div><span>viele Einträge</span></div><span class="lbl" id="scaleNote"></span></div>
+    <div id="grid" class="grid" aria-live="polite"></div>
+    <div class="detail" id="detail" aria-live="polite"><div class="empty">Zelle anklicken, um die zugehörigen Projekte zu sehen.</div></div>
+    <div class="foot">Farbintensität = Anzahl der Einträge · die Filter oben gelten auch für die Heatmaps</div>
   </div>
-  <div id="grid" class="grid" aria-live="polite"></div>
-  <div class="detail" id="detail" aria-live="polite">
-    <div class="empty">Zelle anklicken, um die zugehörigen Projekte zu sehen.</div>
-  </div>
-  <div class="foot"><span id="hcount">–</span> Einträge · Zeilen: WOFÜR? Prozess-Typ · Spalten: WOMIT? KI-Typ · Farbintensität über alle Felder vergleichbar · schraffiert = unklare / mehrfache Zuordnung</div>
-</div></div>
-<div id="err">Die Grafik konnte nicht geladen werden (Plotly nicht erreichbar).</div>
-<div class="foot" id="foot3d"><span id="count">–</span> Einträge · Punkte in derselben Zelle sind leicht versetzt · „unklar“ / „Mehrere“ markieren Datenlücken bzw. Mehrfachzuordnungen</div>
+</div>
+
+<div id="err"></div>
+<div class="foot" id="foot3d">Punkte in derselben Zelle sind leicht versetzt · Klick auf einen Punkt öffnet die Quelle</div>
 
 <script>
 if(new URLSearchParams(location.search).get("bg")==="transparent")document.body.classList.add("transparent");
-
-
-const AX={
-  s:["Pflegeheim","Pflegedienst","Klinik","Setting-<br>übergreifend","Sonstiges /<br>unklar"],
-  p:["Pflegen","Versorgen","Organi-<br>sieren","Kommuni-<br>zieren","Sonstiges /<br>unklar"],
-  k:["Robotik","Sprache<br>+ Text","Bild +<br>Sensorik","Prognose +<br>Optimierung","Mehrere<br>KI-Typen","Sonstiges /<br>unklar"]
-};
-const FULL={
-  s:["Pflegeheim","Pflegedienst","Klinik","Settingübergreifend","Sonstiges / unklar"],
-  p:["Pflegen","Versorgen","Organisieren","Kommunizieren","Sonstiges / unklar"],
-  k:["Robotik","Sprache + Text","Bild + Sensorik","Prognose + Optimierung","Mehrere KI-Typen","Sonstiges / unklar"]
-};
-const COL={x:"#f2a65a",y:"#5fd0c5",z:"#b79cff"};
-const PAL=["#4cc9f0","#f2a65a","#8ddb7a","#e879b9","#f6d55c","#8a94a6"];
-const STATUS={"Im laufenden Einsatz":"#4cc9f0","Forschungsprojekt umgesetzt":"#f2a65a","Pilot / Praxistest":"#8ddb7a","Prototyp / Demonstrator":"#e879b9","Konzept / frühe Entwicklung":"#f6d55c","Beendet / nicht mehr aktiv":"#8a94a6","Unklar":"#5b6578"};
-
-let pts=[];
-function esc(t){return String(t).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
-function build(data){
-  // unbekannte Kategorien aus der Excel automatisch an die Achsen anhaengen
-  data.forEach(r=>{[["s","setting"],["p","prozess"],["k","ki"]].forEach(([a,f])=>{
-    if(!FULL[a].includes(r[f])){FULL[a].push(r[f]);AX[a].push(r[f]);}});});
-  const cnt={};
-  pts=data.map(r=>({id:r.id,n:r.name,t:r.traeger,s:r.setting,p:r.prozess,k:r.ki,u:r.status,d:r.beschreibung,l:r.link,key:[r.setting,r.prozess,r.ki].join("|")}));
-  pts.forEach(q=>{cnt[q.key]=(cnt[q.key]||0)+1;q.i=cnt[q.key];});
-  pts.forEach(q=>{
-    const m=cnt[q.key],a=(q.i-1)/m*2*Math.PI,r=m===1?0:Math.min(.3,.1+.04*m);
-    q.x=FULL.s.indexOf(q.s)+r*Math.cos(a);
-    q.y=FULL.p.indexOf(q.p)+r*Math.sin(a);
-    q.z=FULL.k.indexOf(q.k)+(m===1?0:((q.i%3)-1)*.12);
-  });
-  document.getElementById("count").textContent=pts.length;
-}
-
-let mode="status";
-function groups(){
-  const f={status:q=>q.u,setting:q=>q.s,proc:q=>q.p,ki:q=>q.k}[mode];
-  const order={status:Object.keys(STATUS),setting:FULL.s,proc:FULL.p,ki:FULL.k}[mode];
-  const names=[...new Set(pts.map(f))].sort((a,b)=>order.indexOf(a)-order.indexOf(b));
-  return names.map(g=>({g,col:mode==="status"?(STATUS[g]||"#8a94a6"):PAL[order.indexOf(g)%PAL.length],items:pts.filter(q=>f(q)===g)}));
-}
-function traces(){
-  const t=groups().map(({g,col,items})=>({
-    type:"scatter3d",mode:"markers",name:g+" ("+items.length+")",
-    x:items.map(q=>q.x),y:items.map(q=>q.y),z:items.map(q=>q.z),
-    text:items.map(q=>"<b>"+esc(q.n)+"</b><br>"+esc(q.t)+"<br><br>WO: "+esc(q.s)+"<br>WOFÜR: "+esc(q.p)+"<br>WOMIT: "+esc(q.k)+"<br>Status: "+esc(q.u)+(q.l?"<br><i>Klick: Quelle öffnen</i>":"")),
-    customdata:items.map(q=>q.l),
-    hoverinfo:"text",
-    hoverlabel:{bgcolor:"#161e2e",bordercolor:col,font:{color:"#e8edf5",size:12}},
-    marker:{size:7,color:col,opacity:1,line:{color:"#0e1420",width:1}}
-  }));
-  const gx=[],gy=[],gz=[];
-  FULL.s.forEach((_,a)=>FULL.p.forEach((_,b)=>FULL.k.forEach((_,c)=>{gx.push(a);gy.push(b);gz.push(c);})));
-  t.unshift({type:"scatter3d",mode:"markers",x:gx,y:gy,z:gz,hoverinfo:"skip",showlegend:false,
-    marker:{size:1.5,color:"#4a5870",opacity:.6}});
-  return t;
-}
-// Achsen ohne eigene Titel (Titel stehen in der Legende) – Ticks in Achsenfarbe, mit Abstand zum Würfel
-const ax=(key,c)=>({title:{text:""},tickmode:"array",tickvals:AX[key].map((_,i)=>i),ticktext:AX[key],
-  range:[-.7,AX[key].length-.3],showbackground:true,backgroundcolor:"#121a28",
-  gridcolor:"#2a364b",zerolinecolor:"#2a364b",linecolor:c,linewidth:2,showline:true,
-  tickfont:{size:10,color:c},ticklen:4});
-const cam0={eye:{x:1.7,y:-1.9,z:1.0}};
-const layout=()=>({
-  margin:{l:0,r:0,t:0,b:0},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",
-  font:{family:"Inter,system-ui,sans-serif",color:"#e8edf5"},
-  scene:{xaxis:ax("s",COL.x),yaxis:ax("p",COL.y),zaxis:ax("k",COL.z),
-    aspectmode:"manual",aspectratio:{x:1.25,y:1.25,z:1.1},camera:cam0,bgcolor:"rgba(0,0,0,0)"},
-  legend:{x:.01,y:.99,bgcolor:"rgba(22,30,46,.88)",bordercolor:"#2a364b",borderwidth:1,font:{size:12,color:"#e8edf5"}}
-});
-const cfg={responsive:true,displaylogo:false,modeBarButtonsToRemove:["toImage","resetCameraLastSave3d"]};
-const el=document.getElementById("plot");
-function draw(keepCam){
-  if(!window.Plotly){document.getElementById("err").style.display="block";return;}
-  const l=layout();
-  if(keepCam&&el._fullLayout&&el._fullLayout.scene)l.scene.camera=el._fullLayout.scene.camera;
-  Plotly.react(el,traces(),l,cfg);
-}
-const Heat=(function(){
-const SETTINGS=[
-  ["Pflegeheim","dauerhaft, 24/7"],
-  ["Pflegedienst","in der Häuslichkeit"],
-  ["Klinik","befristet, hohe Komplexität"],
-  ["Settingübergreifend","mehrere Settings"],
-  ["Sonstiges / unklar","Setting nicht erkennbar"]
-];
-const ROWS=["Pflegen","Versorgen","Organisieren","Kommunizieren"];
-const COLS=["Robotik","Sprache + Text","Bild + Sensorik","Prognose + Optimierung"];
-const ROWS_X=["Mehrere Prozess-Typen","Sonstiges / unklar"];
-const COLS_X=["Mehrere KI-Typen","Sonstiges / unklar"];
-const SHORT={"Prognose + Optimierung":"Prognose + Optim.","Sonstiges / unklar":"unklar","Mehrere Prozess-Typen":"Mehrere","Mehrere KI-Typen":"Mehrere","Kommunizieren":"Kommuni-zieren"};
-const sh=t=>SHORT[t]||t;
-let data=[],sel=null;
-
 const $=id=>document.getElementById(id);
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-function axes(){
-  const showUnc=$("cUnc").checked;
-  let rows=ROWS.slice(),cols=COLS.slice();
-  // unbekannte Kategorien aus Excel automatisch ergaenzen
-  data.forEach(d=>{
-    if(![...ROWS,...ROWS_X].includes(d.prozess))rows.push(d.prozess);
-    if(![...COLS,...COLS_X].includes(d.ki))cols.push(d.ki);
+/* ---------- Kategorien (kanonische Reihenfolge; unbekannte Werte aus der Excel werden automatisch ergänzt) ---------- */
+const CANON={
+  setting:["Pflegeheim","Pflegedienst","Klinik","Informell"],
+  prozess:["Pflegen","Versorgen","Organisieren","Kommunizieren"],
+  ki:["Robotik","Sprache + Text","Bild + Sensorik","Prognose + Optimierung"],
+  ort:["Deutschland","Rest der Welt"],
+  kategorie:["Forschungsprojekt","Unternehmen","Studie"],
+  status:["In Planung","Laufend","Abgeschlossen","In Entwicklung / Pilot","Im Verkauf / im Einsatz","Eingestellt","Veröffentlicht","Preprint"]
+};
+const NA="ohne Angabe";
+const DIM={
+  setting:{label:"WO?",name:"Pflege-Setting",col:"#f2a65a"},
+  prozess:{label:"WOFÜR?",name:"Prozess-Typ",col:"#5fd0c5"},
+  ki:{label:"WOMIT?",name:"KI-Typ",col:"#b79cff"}
+};
+const TICK3D={ "Organisieren":"Organi-<br>sieren","Kommunizieren":"Kommuni-<br>zieren","Sprache + Text":"Sprache<br>+ Text","Bild + Sensorik":"Bild +<br>Sensorik","Prognose + Optimierung":"Prognose +<br>Optimierung"};
+const SHORT={"Prognose + Optimierung":"Prognose + Optim.","Kommunizieren":"Kommuni-zieren"};
+const PAL=["#4cc9f0","#f2a65a","#8ddb7a","#e879b9","#f6d55c","#b79cff","#8a94a6"];
+const COLORS={
+  status:{"In Planung":"#f6d55c","Laufend":"#4cc9f0","Abgeschlossen":"#5b8def","In Entwicklung / Pilot":"#f2a65a","Im Verkauf / im Einsatz":"#8ddb7a","Eingestellt":"#8a94a6","Veröffentlicht":"#b79cff","Preprint":"#e879b9"},
+  kategorie:{"Forschungsprojekt":"#4cc9f0","Unternehmen":"#f2a65a","Studie":"#b79cff"},
+  ort:{"Deutschland":"#8ddb7a","Rest der Welt":"#e879b9"}
+};
+const COLOR_MODES=[["status","Status"],["kategorie","Kategorie"],["ort","Ort"],["setting","Setting"],["prozess","Prozess-Typ"],["ki","KI-Typ"]];
+
+let ALL=[], DATA=[], LISTS={}, F={}, mode="status", hmode="over", sel=null, skipped=0;
+
+function norm(v){return (v==null?"":String(v)).trim();}
+function init(raw){
+  ALL=raw.map(r=>({id:r.id,n:r.name,t:r.traeger,ort:norm(r.ort)||NA,setting:norm(r.setting),prozess:norm(r.prozess),ki:norm(r.ki),
+    kategorie:norm(r.kategorie)||NA,status:norm(r.status)||NA,d:r.beschreibung,l:r.link}));
+  // Einträge ohne Setting / Prozess / KI-Typ können nicht eingeordnet werden
+  DATA=ALL.filter(d=>d.setting&&d.prozess&&d.ki);
+  skipped=ALL.length-DATA.length;
+  Object.keys(CANON).forEach(k=>{
+    const extra=[...new Set(DATA.map(d=>d[k]))].filter(v=>!CANON[k].includes(v)&&v!==NA);
+    let l=CANON[k].concat(extra);
+    if(DATA.some(d=>d[k]===NA)&&["ort","kategorie","status"].includes(k))l.push(NA);
+    LISTS[k]=l;
   });
-  rows=[...new Set(rows)];cols=[...new Set(cols)];
-  const rx=[...ROWS_X],cx=[...COLS_X];
-  if(showUnc){rows=rows.concat(rx);cols=cols.concat(cx);}
-  return {rows,cols,rx,cx};
+  // Filter: alles aktiv
+  F={ort:new Set(LISTS.ort),kategorie:new Set(LISTS.kategorie),status:new Set(LISTS.status)};
+  buildChips();buildColorBtns();
 }
-function settingsList(){
-  const merged=$("cOther").checked;
-  let list=SETTINGS.slice(0,3);
-  data.forEach(d=>{if(!SETTINGS.some(s=>s[0]===d.setting))list.push([d.setting,""]);});
-  if(merged)list=list.concat(SETTINGS.slice(3));
-  return [...new Map(list.map(s=>[s[0],s])).values()];
-}
-function render(){
-  const {rows,cols,rx,cx}=axes();
-  const sets=settingsList();
-  const cnt=(s,r,c)=>data.filter(d=>d.setting===s&&d.prozess===r&&d.ki===c);
-  let max=1;
-  sets.forEach(([s])=>rows.forEach(r=>cols.forEach(c=>{max=Math.max(max,cnt(s,r,c).length);})));
-  const shown=new Set();
-  const g=$("grid");g.innerHTML="";
-  sets.forEach(([s,desc])=>{
-    let total=0;
-    const card=document.createElement("section");card.className="card";
-    let h='<table role="grid"><thead><tr><th></th>'+cols.map(c=>`<th class="col${cx.includes(c)?" unc":""}" scope="col">${esc(sh(c))}</th>`).join("")+"</tr></thead><tbody>";
-    rows.forEach(r=>{
-      h+=`<tr><th class="row${rx.includes(r)?" unc":""}" scope="row">${esc(sh(r))}</th>`;
-      cols.forEach(c=>{
-        const items=cnt(s,r,c);const n=items.length;total+=n;
-        items.forEach(i=>shown.add(i));
-        const unc=rx.includes(r)||cx.includes(c);
-        const a=n?(.18+.82*n/max):0;
-        const dark=a>.55;
-        const style=n?`background:rgba(76,201,240,${a.toFixed(2)});border-color:rgba(76,201,240,${Math.min(1,a+.2).toFixed(2)});color:${dark?"#0e1420":"#e8edf5"}`:"";
-        const key=[s,r,c].join("|");
-        const pressed=sel===key;
-        h+=n?`<td><button class="cell${unc?" unclear":""}" data-n="${n}" data-key="${esc(key)}" aria-pressed="${pressed}" aria-label="${esc(s)}, ${esc(r)}, ${esc(c)}: ${n} Einträge" title="${esc(items.map(i=>i.name).join(", "))}" style="${style}">${n}</button></td>`
-          :`<td><div class="cell${unc?" unclear":""}" data-n="0" aria-label="${esc(s)}, ${esc(r)}, ${esc(c)}: keine Einträge">·</div></td>`;
-      });
-      h+="</tr>";
-    });
-    h+="</tbody></table>";
-    card.innerHTML=`<h2>${esc(s)}<small>${total} Einträge</small></h2><p class="desc">${esc(desc)}</p>${h}`;
-    g.appendChild(card);
+const filtered=()=>DATA.filter(d=>F.ort.has(d.ort)&&F.kategorie.has(d.kategorie)&&F.status.has(d.status));
+
+/* ---------- Filter-Chips ---------- */
+function chipGroup(el,key,showZero){
+  el.innerHTML="";
+  const cnt={};DATA.forEach(d=>cnt[d[key]]=(cnt[d[key]]||0)+1);
+  LISTS[key].forEach(v=>{
+    if(!showZero&&!cnt[v])return;
+    const b=document.createElement("button");b.className="chip"+(cnt[v]?"":" zero");
+    const c=(COLORS[key]||{})[v];if(c)b.style.setProperty("--c",c);
+    b.setAttribute("aria-pressed",String(F[key].has(v)));
+    b.innerHTML=(c?'<span class="dot"></span>':"")+esc(v)+' <span class="n">'+(cnt[v]||0)+"</span>";
+    b.addEventListener("click",()=>{F[key].has(v)?F[key].delete(v):F[key].add(v);b.setAttribute("aria-pressed",String(F[key].has(v)));onFilter();});
+    el.appendChild(b);
   });
-  const hidden=data.length-shown.size;
-  $("hcount").textContent=data.length+(hidden?` (${hidden} bei aktueller Auswahl ausgeblendet)`:"");
-  g.querySelectorAll("button.cell").forEach(b=>b.addEventListener("click",()=>{
-    sel=sel===b.dataset.key?null:b.dataset.key;render();showDetail();
-  }));
 }
-function showDetail(){
-  const d=$("detail");
-  if(!sel){d.innerHTML='<div class="empty">Zelle anklicken, um die zugehörigen Projekte zu sehen.</div>';return;}
-  const [s,r,c]=sel.split("|");
-  const items=data.filter(x=>x.setting===s&&x.prozess===r&&x.ki===c);
-  d.innerHTML=`<h3>${items.length} Einträge</h3><div class="path">WO: ${esc(s)} · WOFÜR: ${esc(r)} · WOMIT: ${esc(c)}</div><div class="items">`+
-   items.map(i=>`<div class="item"><b>${esc(i.name)}</b><div class="t">${esc(i.traeger)}</div><span class="s">${esc(i.status)}</span>${/^https?:\/\//.test(i.link)?`<a href="${esc(i.link)}" target="_blank" rel="noopener">Quelle ↗</a>`:""}</div>`).join("")+"</div>";
+function buildChips(){
+  chipGroup($("fOrt"),"ort",true);chipGroup($("fKat"),"kategorie",true);chipGroup($("fStat"),"status",false);
 }
-$("cUnc").addEventListener("change",()=>{render();});
-$("cOther").addEventListener("change",()=>{render();});
-
-return {set(d){data=d;render();}};
-})();
-
-function bindClick(){
-  el.on("plotly_click",ev=>{const u=ev.points[0]&&ev.points[0].customdata;
-    if(u&&/^https?:\/\//.test(u))window.open(u,"_blank","noopener");});
+function onFilter(){
+  sel=null;
+  const all=["ort","kategorie","status"].every(k=>LISTS[k].filter(v=>DATA.some(d=>d[k]===v)).every(v=>F[k].has(v)));
+  $("fReset").hidden=all;
+  updateCount();
+  draw(true);renderHeat();showDetail();
 }
-fetch("data.json",{cache:"no-cache"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
-  .then(data=>{build(data);Heat.set(data);draw();bindClick();})
-  .catch(e=>{const m=document.getElementById("err");m.style.display="block";
-    m.textContent="data.json konnte nicht geladen werden ("+e.message+"). Bei lokalem Test bitte über einen Webserver öffnen (z. B. python -m http.server).";});
+$("fReset").addEventListener("click",()=>{
+  F={ort:new Set(LISTS.ort),kategorie:new Set(LISTS.kategorie),status:new Set(LISTS.status)};
+  buildChips();onFilter();
+});
+function updateCount(){
+  const n=filtered().length;
+  $("cnt").innerHTML="<b>"+n+"</b> von "+ALL.length+" Einträgen"+(skipped?" · "+skipped+" ohne vollständige Einordnung nicht dargestellt":"");
+}
 
-const btns={status:bStatus,setting:bSetting,proc:bProc,ki:bKI};
-Object.entries(btns).forEach(([m,b])=>b.addEventListener("click",()=>{
-  mode=m;Object.values(btns).forEach(x=>x.setAttribute("aria-pressed","false"));
-  b.setAttribute("aria-pressed","true");draw(true);
-}));
+/* ---------- 3D-Würfel ---------- */
+const cam0={eye:{x:1.7,y:-1.9,z:1.0}};
+let pts=[];
+function build3d(){
+  const items=filtered(),cnt={};
+  pts=items.map(d=>Object.assign({},d,{key:[d.setting,d.prozess,d.ki].join("|")}));
+  pts.forEach(q=>{cnt[q.key]=(cnt[q.key]||0)+1;q.i=cnt[q.key];});
+  pts.forEach(q=>{
+    const m=cnt[q.key],a=(q.i-1)/m*2*Math.PI,r=m===1?0:Math.min(.3,.1+.04*m);
+    q.x=LISTS.setting.indexOf(q.setting)+r*Math.cos(a);
+    q.y=LISTS.prozess.indexOf(q.prozess)+r*Math.sin(a);
+    q.z=LISTS.ki.indexOf(q.ki)+(m===1?0:((q.i%3)-1)*.12);
+  });
+}
+function colorOf(key,v){
+  if(COLORS[key]&&COLORS[key][v])return COLORS[key][v];
+  const i=(LISTS[key]||[]).indexOf(v);return PAL[(i<0?PAL.length-1:i)%PAL.length];
+}
+function traces(){
+  const key=mode,order=LISTS[key];
+  const names=[...new Set(pts.map(q=>q[key]))].sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  const t=names.map(g=>{
+    const items=pts.filter(q=>q[key]===g),col=colorOf(key,g);
+    return {type:"scatter3d",mode:"markers",name:g+" ("+items.length+")",
+      x:items.map(q=>q.x),y:items.map(q=>q.y),z:items.map(q=>q.z),
+      text:items.map(q=>"<b>"+esc(q.n)+"</b><br>"+esc(q.t)+"<br><br>"+esc(q.kategorie)+" · "+esc(q.ort)+"<br>WO: "+esc(q.setting)+"<br>WOFÜR: "+esc(q.prozess)+"<br>WOMIT: "+esc(q.ki)+"<br>Status: "+esc(q.status)+(q.l?"<br><i>Klick: Quelle öffnen</i>":"")),
+      customdata:items.map(q=>q.l),hoverinfo:"text",
+      hoverlabel:{bgcolor:"#161e2e",bordercolor:col,font:{color:"#e8edf5",size:12}},
+      marker:{size:7,color:col,opacity:1,line:{color:"#0e1420",width:1}}};
+  });
+  const gx=[],gy=[],gz=[];
+  LISTS.setting.forEach((_,a)=>LISTS.prozess.forEach((_,b)=>LISTS.ki.forEach((_,c)=>{gx.push(a);gy.push(b);gz.push(c);})));
+  t.unshift({type:"scatter3d",mode:"markers",x:gx,y:gy,z:gz,hoverinfo:"skip",showlegend:false,marker:{size:1.5,color:"#4a5870",opacity:.6}});
+  return t;
+}
+const ax=(key,c)=>({title:{text:""},tickmode:"array",tickvals:LISTS[key].map((_,i)=>i),ticktext:LISTS[key].map(v=>TICK3D[v]||v),
+  range:[-.7,LISTS[key].length-.3],showbackground:true,backgroundcolor:"#121a28",gridcolor:"#2a364b",zerolinecolor:"#2a364b",
+  linecolor:c,linewidth:2,showline:true,tickfont:{size:10,color:c},ticklen:4});
+const layout=()=>({
+  margin:{l:0,r:0,t:0,b:0},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",
+  font:{family:"Inter,system-ui,sans-serif",color:"#e8edf5"},
+  scene:{xaxis:ax("setting",DIM.setting.col),yaxis:ax("prozess",DIM.prozess.col),zaxis:ax("ki",DIM.ki.col),
+    aspectmode:"manual",aspectratio:{x:1.2,y:1.2,z:1.1},camera:cam0,bgcolor:"rgba(0,0,0,0)"},
+  legend:{x:.01,y:.99,bgcolor:"rgba(22,30,46,.88)",bordercolor:"#2a364b",borderwidth:1,font:{size:12,color:"#e8edf5"}}
+});
+const cfg={responsive:true,displaylogo:false,modeBarButtonsToRemove:["toImage","resetCameraLastSave3d"]};
+const el=$("plot");
+let clickBound=false;
+function draw(keepCam){
+  if(!window.Plotly){$("err").style.display="block";$("err").textContent="Die Grafik konnte nicht geladen werden (Plotly nicht erreichbar).";return;}
+  build3d();
+  $("empty3d").style.display=pts.length?"none":"flex";
+  const l=layout();
+  if(keepCam&&el._fullLayout&&el._fullLayout.scene)l.scene.camera=el._fullLayout.scene.camera;
+  Plotly.react(el,traces(),l,cfg);
+  if(!clickBound&&el.on){clickBound=true;el.on("plotly_click",ev=>{const u=ev.points[0]&&ev.points[0].customdata;
+    if(u&&/^https?:\/\//.test(u))window.open(u,"_blank","noopener");});}
+}
+function buildColorBtns(){
+  const box=$("colorBtns");box.querySelectorAll("button").forEach(b=>b.remove());
+  COLOR_MODES.forEach(([k,label])=>{
+    const b=document.createElement("button");b.textContent=label;b.setAttribute("aria-pressed",String(k===mode));
+    b.addEventListener("click",()=>{mode=k;box.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");draw(true);});
+    box.appendChild(b);
+  });
+}
 let spin=null,ang=Math.atan2(-1.9,1.7);
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
-function stop(){if(spin){cancelAnimationFrame(spin);spin=null;bSpin.setAttribute("aria-pressed","false");}}
-bSpin.addEventListener("click",()=>{
+function stop(){if(spin){cancelAnimationFrame(spin);spin=null;$("bSpin").setAttribute("aria-pressed","false");}}
+$("bSpin").addEventListener("click",()=>{
   if(spin){stop();return;}
-  bSpin.setAttribute("aria-pressed","true");
+  $("bSpin").setAttribute("aria-pressed","true");
   const step=()=>{ang+=reduce?.002:.006;
     Plotly.relayout(el,{"scene.camera.eye":{x:2.5*Math.cos(ang),y:2.5*Math.sin(ang),z:1.0}});
     spin=requestAnimationFrame(step);};
   step();
 });
 el.addEventListener("pointerdown",stop);
-bReset.addEventListener("click",()=>{stop();ang=Math.atan2(-1.9,1.7);Plotly.relayout(el,{"scene.camera":cam0});});
-const views={cube:vCube,heat:vHeat};
+$("bReset").addEventListener("click",()=>{stop();ang=Math.atan2(-1.9,1.7);Plotly.relayout(el,{"scene.camera":cam0});});
+
+/* ---------- Heatmaps ---------- */
+const sh=t=>SHORT[t]||t;
+function matrixHTML(items,rd,cd,fixed,max){
+  const rows=LISTS[rd],cols=LISTS[cd];
+  const rc=DIM[rd].col,cc=DIM[cd].col;
+  let h='<table role="grid"><thead><tr><th></th>'+cols.map(c=>`<th class="col" scope="col" style="color:${cc}">${esc(sh(c))}</th>`).join("")+"</tr></thead><tbody>";
+  let total=0;
+  rows.forEach(r=>{
+    h+=`<tr><th class="row" scope="row" style="color:${rc}">${esc(sh(r))}</th>`;
+    cols.forEach(c=>{
+      const it=items.filter(d=>d[rd]===r&&d[cd]===c&&Object.keys(fixed).every(k=>d[k]===fixed[k]));
+      const n=it.length;total+=n;
+      const con=Object.assign({},fixed,{[rd]:r,[cd]:c});const key=JSON.stringify(con);
+      const a=n?(.18+.82*n/max):0,dark=a>.55;
+      const style=n?`background:rgba(76,201,240,${a.toFixed(2)});border-color:rgba(76,201,240,${Math.min(1,a+.2).toFixed(2)});color:${dark?"#0e1420":"#e8edf5"}`:"";
+      const lab=`${r}, ${c}`;
+      h+=n?`<td><button class="cell" data-n="${n}" data-key="${esc(key)}" aria-pressed="${sel===key}" aria-label="${esc(lab)}: ${n} Einträge" title="${esc(it.map(i=>i.n).join(", "))}" style="${style}">${n}</button></td>`
+          :`<td><div class="cell" data-n="0" aria-label="${esc(lab)}: keine Einträge">·</div></td>`;
+    });
+    h+="</tr>";
+  });
+  return {html:h+"</tbody></table>",total};
+}
+function maxOf(items,rd,cd,fixed){
+  let m=1;LISTS[rd].forEach(r=>LISTS[cd].forEach(c=>{
+    m=Math.max(m,items.filter(d=>d[rd]===r&&d[cd]===c&&Object.keys(fixed).every(k=>d[k]===fixed[k])).length);}));
+  return m;
+}
+const dd=k=>`<span style="color:${DIM[k].col}">${DIM[k].label} ${DIM[k].name}</span>`;
+function renderHeat(){
+  const items=filtered(),g=$("grid");g.innerHTML="";
+  const cards=[];
+  if(hmode==="over"){
+    $("scaleNote").textContent="Farbskala je Matrix";
+    [["setting","prozess"],["setting","ki"],["prozess","ki"]].forEach(([r,c])=>{
+      const m=matrixHTML(items,r,c,{},maxOf(items,r,c,{}));
+      cards.push(`<h2>${DIM[r].name} × ${DIM[c].name}<small>${m.total} Einträge</small></h2><p class="desc">Zeilen: ${dd(r)} · Spalten: ${dd(c)}</p>${m.html}`);
+    });
+  }else{
+    $("scaleNote").textContent="Farbskala über alle Felder gleich";
+    let mx=1;LISTS.setting.forEach(s=>{mx=Math.max(mx,maxOf(items,"prozess","ki",{setting:s}));});
+    LISTS.setting.forEach(s=>{
+      const m=matrixHTML(items,"prozess","ki",{setting:s},mx);
+      cards.push(`<h2>${esc(s)}<small>${m.total} Einträge</small></h2><p class="desc">Zeilen: ${dd("prozess")} · Spalten: ${dd("ki")}</p>${m.html}`);
+    });
+  }
+  cards.forEach(c=>{const s=document.createElement("section");s.className="card";s.innerHTML=c;g.appendChild(s);});
+  g.querySelectorAll("button.cell").forEach(b=>b.addEventListener("click",()=>{
+    sel=sel===b.dataset.key?null:b.dataset.key;renderHeat();showDetail();}));
+}
+function showDetail(){
+  const d=$("detail");
+  if(!sel){d.innerHTML='<div class="empty">Zelle anklicken, um die zugehörigen Projekte zu sehen.</div>';return;}
+  const con=JSON.parse(sel);
+  const items=filtered().filter(x=>Object.keys(con).every(k=>x[k]===con[k]));
+  const path=Object.keys(con).map(k=>`${DIM[k].label} ${esc(con[k])}`).join(" · ");
+  d.innerHTML=`<h3>${items.length} Einträge</h3><div class="path">${path}</div><div class="items">`+
+   items.map(i=>`<div class="item"><b>${esc(i.n)}</b><div class="t">${esc(i.t)}</div><span class="s">${esc(i.kategorie)}</span><span class="s">${esc(i.status)}</span><span class="s">${esc(i.ort)}</span>${/^https?:\/\//.test(i.l)?`<a href="${esc(i.l)}" target="_blank" rel="noopener">Quelle ↗</a>`:""}</div>`).join("")+"</div>";
+}
+[["mOver","over"],["mSet","setting"]].forEach(([id,m])=>$(id).addEventListener("click",()=>{
+  hmode=m;sel=null;$("mOver").setAttribute("aria-pressed",String(m==="over"));$("mSet").setAttribute("aria-pressed",String(m==="setting"));renderHeat();showDetail();}));
+
+/* ---------- Ansicht wechseln ---------- */
 function setView(v){
   document.body.classList.toggle("view-heat",v==="heat");
-  document.getElementById("heat").classList.toggle("on",v==="heat");
-  vCube.setAttribute("aria-pressed",String(v==="cube"));
-  vHeat.setAttribute("aria-pressed",String(v==="heat"));
-  if(v==="heat")stop();
-  else if(window.Plotly&&el.data)setTimeout(()=>Plotly.Plots.resize(el),30);
+  $("heat").classList.toggle("on",v==="heat");
+  $("vCube").setAttribute("aria-pressed",String(v==="cube"));
+  $("vHeat").setAttribute("aria-pressed",String(v==="heat"));
+  if(v==="heat")stop();else if(window.Plotly&&el.data)setTimeout(()=>Plotly.Plots.resize(el),30);
   try{history.replaceState(null,"",v==="heat"?"#heatmap":"#wuerfel");}catch(e){}
 }
-vCube.addEventListener("click",()=>setView("cube"));
-vHeat.addEventListener("click",()=>setView("heat"));
+$("vCube").addEventListener("click",()=>setView("cube"));
+$("vHeat").addEventListener("click",()=>setView("heat"));
+
+fetch("data.json",{cache:"no-cache"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
+  .then(j=>{init(j);updateCount();draw();renderHeat();})
+  .catch(e=>{const m=$("err");m.style.display="block";
+    m.textContent="data.json konnte nicht geladen werden ("+e.message+"). Bei lokalem Test bitte über einen Webserver öffnen (python -m http.server).";});
 if(location.hash==="#heatmap")setView("heat");
 </script>
 </body>
