@@ -440,5 +440,18 @@
   "status": "Im Verkauf / im Einsatz",
   "beschreibung": "Erfassen Sie Pflegedokumentation per Sprache, dokumentieren Sie mehrere Bewohner in einer Aufnahme, bereiten Sie Arztgespräche vor und lassen Sie die KI automatisch strukturierte, professionelle Dokumentation erstellen.",
   "link": "https://www.dexter-health.com/dexter-mobile"
+ },
+ {
+  "id": "37",
+  "name": "Digital Case Manager-A Data-Driven Tool to Support Family Caregivers with Initial Guidance",
+  "traeger": "Paul Wunderlich, Frauke Wiegräbe, Helene Dörksen",
+  "ort": "Deutschland",
+  "setting": "Informell",
+  "prozess": "Organisieren",
+  "ki": "Prognose + Optimierung",
+  "kategorie": "Studie",
+  "status": "Veröffentlicht",
+  "beschreibung": "This tool uses machine learning algorithms to learn the relationship between a care situation and the next care steps and helps family caregivers balance their professional and private lives so that they are able to continue caring for their family members without sacrificing their own jobs and personal ambitions.",
+  "link": "https://pubmed.ncbi.nlm.nih.gov/36673969/"
  }
 ]
